@@ -1,0 +1,94 @@
+Summary:   Firmware update daemon
+Name:      fwupd-qubes
+Version:   @VERSION@
+Release:   @REL@%{?dist}
+License:   LGPLv2+
+URL:       https://github.com/fwupd/fwupd
+Source0:   fwupd-%{version}.tar.xz
+Source1:   meson.build
+BuildArch: noarch
+
+BuildRequires: meson
+BuildRequires: gcc
+
+%description
+fwupd is a daemon to allow session software to update device firmware.
+
+%package dom0
+Summary: fwupd wrapper for Qubes OS - dom0 scripts
+Requires:   gcab
+Requires:   fwupd >= 1.5.7
+Requires:   libjcat >= 0.1.6
+Requires:   python3-packaging
+Requires:   sequoia-sqv
+
+%description dom0
+fwupd wrapper for Qubes OS
+
+%package vm
+Summary: fwupd wrapper for Qubes OS - VM scripts
+Requires:   gcab
+Requires:   fwupd >= 1.5.7
+Requires:   libjcat >= 0.1.6
+Requires:   python3-packaging
+
+%description vm
+fwupd wrapper for Qubes OS
+
+%prep
+%autosetup -p1 -n fwupd-%{version}
+#override meson.build to handle just qubes part
+cp %{SOURCE1} ./
+grep qubes meson_options.txt > meson_options.txt.new
+mv -f meson_options.txt.new meson_options.txt
+
+%build
+
+%if 0%{?fedora} >= 34
+%meson \
+    -Dqubes=true
+
+%meson_build
+%endif
+
+%install
+%if 0%{?fedora} >= 34
+%meson_install
+%else
+# meson too old, install relevant parts manually (to be dropped later)
+cd contrib/qubes
+install -d $RPM_BUILD_ROOT/usr/share/qubes-fwupd/src
+install -t $RPM_BUILD_ROOT/usr/share/qubes-fwupd/src src/*.py
+cp -r test $RPM_BUILD_ROOT/usr/share/qubes-fwupd/test
+install -d $RPM_BUILD_ROOT/usr/libexec/qubes-fwupd
+install -t $RPM_BUILD_ROOT/usr/libexec/qubes-fwupd src/vms/*.py
+install -d $RPM_BUILD_ROOT/usr/sbin
+ln -s ../share/qubes-fwupd/src/qubes_fwupdmgr.py \
+    $RPM_BUILD_ROOT/usr/sbin/qubes-fwupdmgr
+%endif
+
+%files vm
+%{_libexecdir}/qubes-fwupd/fwupd_common_vm.py
+%{_libexecdir}/qubes-fwupd/fwupd_download_updates.py
+
+%files dom0
+%{_datadir}/qubes-fwupd/src/fwupd_receive_updates.py
+%{_sbindir}/qubes-fwupdmgr
+%{_datadir}/qubes-fwupd/src/qubes_fwupdmgr.py
+%{_datadir}/qubes-fwupd/src/qubes_fwupd_common.py
+%{_datadir}/qubes-fwupd/src/qubes_fwupd_heads.py
+%{_datadir}/qubes-fwupd/src/qubes_fwupd_update.py
+%{_datadir}/qubes-fwupd/src/__init__.py
+%{_datadir}/qubes-fwupd/test/fwupd_logs.py
+%{_datadir}/qubes-fwupd/test/test_qubes_fwupdmgr.py
+%{_datadir}/qubes-fwupd/test/test_qubes_fwupd_heads.py
+%{_datadir}/qubes-fwupd/test/__init__.py
+%{_datadir}/qubes-fwupd/test/logs/get_devices.log
+%{_datadir}/qubes-fwupd/test/logs/get_updates.log
+%{_datadir}/qubes-fwupd/test/logs/help.log
+%{_datadir}/qubes-fwupd/test/logs/firmware.metainfo.xml
+%{_datadir}/qubes-fwupd/test/logs/metainfo_name/firmware.metainfo.xml
+%{_datadir}/qubes-fwupd/test/logs/metainfo_version/firmware.metainfo.xml
+
+%changelog
+@CHANGELOG@

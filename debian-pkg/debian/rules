@@ -1,0 +1,40 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+
+export LC_ALL := C.UTF-8
+export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+export DEB_LDFLAGS_MAINT_STRIP=-Wl,-Bsymbolic-functions
+
+export DESTDIR=$(shell pwd)/debian/tmp
+
+CONFARGS = --werror -Dqubes=true
+
+%:
+	dh $@
+
+override_dh_auto_clean:
+	rm -fr obj-*
+	rm -fr debian/build
+
+override_dh_auto_configure:
+	if dpkg --compare-versions "$$(dpkg-query -f='$${Version}' --show 'meson')" 'ge' '0.61.0'; then \
+		cp -f debian/meson.build ./ && \
+		grep qubes meson_options.txt > meson_options.txt.new && \
+		mv -f meson_options.txt.new meson_options.txt && \
+		dh_auto_configure -- $(CONFARGS); \
+	fi
+
+override_dh_auto_install:
+	if dpkg --compare-versions "$$(dpkg-query -f='$${Version}' --show 'meson')" 'lt' '0.61.0'; then \
+		cd contrib/qubes && \
+		install -d $(DESTDIR)/usr/share/qubes-fwupd/src && \
+		install -t $(DESTDIR)/usr/share/qubes-fwupd/src src/*.py && \
+		cp -r test $(DESTDIR)/usr/share/qubes-fwupd/test && \
+		install -d $(DESTDIR)/usr/libexec/qubes-fwupd && \
+		install -t $(DESTDIR)/usr/libexec/qubes-fwupd src/vms/*.py && \
+		install -d $(DESTDIR)/usr/sbin && \
+		ln -s ../share/qubes-fwupd/src/qubes_fwupdmgr.py \
+			$(DESTDIR)/usr/sbin/qubes-fwupdmgr; \
+	else \
+		dh_auto_install --destdir=$(DESTDIR); \
+	fi

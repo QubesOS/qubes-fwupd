@@ -1,0 +1,18 @@
+host:
+  rpm:
+    build:
+    - fwupd.spec
+vm:
+  rpm:
+    build:
+    - fwupd.spec
+  deb:
+    build:
+    - debian-pkg/debian
+
+source:
+  files:
+  - url: https://github.com/fwupd/fwupd/releases/download/@VERSION@/fwupd-@VERSION@.tar.xz
+    signature: https://github.com/fwupd/fwupd/releases/download/@VERSION@/fwupd-@VERSION@.tar.xz.asc
+    pubkeys:
+    - hughsie.pub

@@ -1,0 +1,23 @@
+Source: fwupd-qubes
+Priority: optional
+Maintainer: Marek Marczykowski-Górecki <marmarek@invisiblethingslab.com>
+Build-Depends:
+	debhelper (>= 12),
+	dh-strip-nondeterminism,
+	meson,
+Rules-Requires-Root: no
+Standards-Version: 4.6.0.1
+Section: admin
+Homepage: https://github.com/fwupd/fwupd
+Vcs-Git: https://github.com/QubesOS/qubes-fwupd.git
+
+Package: fwupd-qubes-vm
+Section: libs
+Architecture: any
+Depends: ${misc:Depends},
+         ${shlibs:Depends},
+         curl,
+         python3,
+         jcat,
+Multi-Arch: same
+Description: fwupd wrapper for Qubes OS - VM scripts
