@@ -1,0 +1,56 @@
+From ad3063c0b7334867865c65c728d652e9d49f3729 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Marek=20Marczykowski-G=C3=B3recki?=
+ <marmarek@invisiblethingslab.com>
+Date: Fri, 19 May 2023 18:04:26 +0200
+Subject: [PATCH] qubes: fix vendor check and make it optional
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Fix looking for metainfo.xml file - it may have a different name, so use
+jcat to find the name.
+
+But then, make the check optional, as the "developer_name" field is not
+always present - for example HP does not include it.
+
+Signed-off-by: Marek Marczykowski-Górecki <marmarek@invisiblethingslab.com>
+---
+ contrib/qubes/src/qubes_fwupdmgr.py | 20 +++++++++++++++-----
+ 1 file changed, 15 insertions(+), 5 deletions(-)
+
+diff --git a/contrib/qubes/src/qubes_fwupdmgr.py b/contrib/qubes/src/qubes_fwupdmgr.py
+index a772b940a..031caf251 100755
+--- a/contrib/qubes/src/qubes_fwupdmgr.py
++++ b/contrib/qubes/src/qubes_fwupdmgr.py
+@@ -344,13 +344,23 @@ class QubesFwupdmgr(FwupdHeads, FwupdUpdate, FwupdReceiveUpdates):
+             if p.returncode != 0:
+                 raise Exception(f"gcab: Error while extracting {arch_path}.")
+             path_metainfo = os.path.join(tmpdir, "firmware.metainfo.xml")
++            if not os.path.exists(path_metainfo):
++                # find the filename in jcat
++                environ = os.environ.copy()
++                environ["LC_ALL"] = "C"
++                cmd_info = ["jcat-tool", "info", f"{tmpdir}/firmware.jcat"]
++                info_stdout = subprocess.check_output(cmd_info, env=environ).decode()
++                info_id_line = [line for line in info_stdout.splitlines()
++                                if "ID:" in line and "metainfo.xml" in line]
++                if info_id_line:
++                    info_id = info_id_line[0].split(":", 1)[1].strip()
++                    path_metainfo = os.path.join(tmpdir, info_id)
+             tree = ET.parse(path_metainfo)
+         root = tree.getroot()
+-        vendor = root.find("developer_name").text
+-        if vendor is None:
+-            raise ValueError("No vendor information in firmware metainfo.")
+-        if vendor not in dmi_info:
+-            raise ValueError("Wrong firmware provider.")
++        vendor = root.findtext("developer_name")
++        if vendor is not None:
++            if vendor not in dmi_info:
++                raise ValueError("Wrong firmware provider.")
+         if not downgrade and pversion.parse(version) <= pversion.parse(
+             self.dmi_version
+         ):
+-- 
+2.39.2
+
