@@ -1,3 +1,9 @@
+fwupd-qubes (1.8.14-3) unstable; urgency=medium
+
+  * Make 'fwupdmgr get-updates' call think it's "interactive"
+
+ -- Marek Marczykowski-Górecki <marmarek@invisiblethingslab.com>  Sat, 01 Jul 2023 16:37:54 +0200
+
 fwupd-qubes (1.8.14-2) unstable; urgency=medium
 
   * fix vendor check and make it optional
