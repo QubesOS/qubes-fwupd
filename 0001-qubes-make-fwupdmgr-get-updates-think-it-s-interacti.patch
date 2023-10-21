@@ -11,11 +11,11 @@ being listed.
 
 "Fix" this by using new pty for stdout capture, instead of a pipe.
 ---
- contrib/qubes/src/qubes_fwupdmgr.py | 29 ++++++++++++++++++++++++-----
- 1 file changed, 24 insertions(+), 5 deletions(-)
+ contrib/qubes/src/qubes_fwupdmgr.py | 23 +++++++++++++++++++++--
+ 1 file changed, 21 insertions(+), 2 deletions(-)
 
 diff --git a/contrib/qubes/src/qubes_fwupdmgr.py b/contrib/qubes/src/qubes_fwupdmgr.py
-index 031caf251..ee73af2f4 100755
+index a772b940a..887241f22 100755
 --- a/contrib/qubes/src/qubes_fwupdmgr.py
 +++ b/contrib/qubes/src/qubes_fwupdmgr.py
 @@ -7,8 +7,10 @@
@@ -29,18 +29,12 @@ index 031caf251..ee73af2f4 100755
  import re
  import shutil
  import subprocess
-@@ -366,11 +368,28 @@ class QubesFwupdmgr(FwupdHeads, FwupdUpdate, FwupdReceiveUpdates):
-         ):
-             raise ValueError(f"{version} < {self.dmi_version} Downgrade not allowed")
- 
--    def _get_dom0_devices(self):
--        """Gathers information about devices connected in dom0."""
--        cmd_get_dom0_devices = [FWUPDMGR, "--json", "get-devices"]
--        p = subprocess.Popen(cmd_get_dom0_devices, stdout=subprocess.PIPE)
--        self.dom0_devices_info = p.communicate()[0].decode()
-+    def _get_dom0_updates(self):
-+        """Gathers information about available updates."""
-+        cmd_get_dom0_updates = [FWUPDMGR, "--json", "get-updates"]
+@@ -182,8 +184,25 @@ class QubesFwupdmgr(FwupdHeads, FwupdUpdate, FwupdReceiveUpdates):
+     def _get_dom0_updates(self):
+         """Gathers information about available updates."""
+         cmd_get_dom0_updates = [FWUPDMGR, "--json", "get-updates"]
+-        p = subprocess.Popen(cmd_get_dom0_updates, stdout=subprocess.PIPE)
+-        self.dom0_updates_info = p.communicate()[0].decode()
 +        # connect stdout to a pty, otherwise get-updates works in
 +        # non-interactive mode and doesn't list all the updates
 +        # (based on FWUUPD_FEATURE_* flags)
@@ -60,8 +54,8 @@ index 031caf251..ee73af2f4 100755
 +            data += new_data
 +        self.dom0_updates_info = data.decode()
 +        p.wait()
-         if p.returncode != 0:
-             raise Exception("fwupd-qubes: Getting devices info failed")
+         if p.returncode != 0 and p.returncode != 2:
+             raise Exception("fwupd-qubes: Getting available updates failed")
  
 -- 
 2.39.2
