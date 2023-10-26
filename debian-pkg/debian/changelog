@@ -1,3 +1,10 @@
+fwupd-qubes (1.8.14-4) unstable; urgency=medium
+
+  [ Yanase Yuki ]
+  * fix patch which wrongly delete _get_dom0_devices()
+
+ -- Marek Marczykowski-Górecki <marmarek@invisiblethingslab.com>  Thu, 26 Oct 2023 05:02:58 +0200
+
 fwupd-qubes (1.8.14-3) unstable; urgency=medium
 
   * Make 'fwupdmgr get-updates' call think it's "interactive"
