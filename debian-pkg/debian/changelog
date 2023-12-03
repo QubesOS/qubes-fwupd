@@ -1,3 +1,9 @@
+fwupd-qubes (1.8.14-5) unstable; urgency=medium
+
+  * Make vendor check case-insensitive
+
+ -- Marek Marczykowski-Górecki <marmarek@invisiblethingslab.com>  Sun, 03 Dec 2023 04:54:22 +0100
+
 fwupd-qubes (1.8.14-4) unstable; urgency=medium
 
   [ Yanase Yuki ]
