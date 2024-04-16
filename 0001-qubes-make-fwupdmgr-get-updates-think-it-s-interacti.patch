@@ -11,8 +11,8 @@ being listed.
 
 "Fix" this by using new pty for stdout capture, instead of a pipe.
 ---
- contrib/qubes/src/qubes_fwupdmgr.py | 23 +++++++++++++++++++++--
- 1 file changed, 21 insertions(+), 2 deletions(-)
+ contrib/qubes/src/qubes_fwupdmgr.py | 24 +++++++++++++++++++++--
+ 1 file changed, 22 insertions(+), 2 deletions(-)
 
 diff --git a/contrib/qubes/src/qubes_fwupdmgr.py b/contrib/qubes/src/qubes_fwupdmgr.py
 index a772b940a..887241f22 100755
@@ -29,7 +29,7 @@ index a772b940a..887241f22 100755
  import re
  import shutil
  import subprocess
-@@ -182,8 +184,25 @@ class QubesFwupdmgr(FwupdHeads, FwupdUpdate, FwupdReceiveUpdates):
+@@ -182,8 +184,26 @@ class QubesFwupdmgr(FwupdHeads, FwupdUpdate, FwupdReceiveUpdates):
      def _get_dom0_updates(self):
          """Gathers information about available updates."""
          cmd_get_dom0_updates = [FWUPDMGR, "--json", "get-updates"]
@@ -39,7 +39,8 @@ index a772b940a..887241f22 100755
 +        # non-interactive mode and doesn't list all the updates
 +        # (based on FWUUPD_FEATURE_* flags)
 +        mstdout, sstdout = pty.openpty()
-+        p = subprocess.Popen(cmd_get_dom0_updates, stdout=sstdout)
++        p = subprocess.Popen(cmd_get_dom0_updates, stdout=sstdout,
++                             stdin=subprocess.DEVNULL)
 +        os.close(sstdout)
 +        data = b""
 +        while True:
