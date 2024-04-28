@@ -1,8 +1,8 @@
-From b142ab29809a5e5b2df736ba1efa6d71a786dae1 Mon Sep 17 00:00:00 2001
+From 54b80741fc13e8034cd7242bf84b28fd01cbd1e3 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Marek=20Marczykowski-G=C3=B3recki?=
  <marmarek@invisiblethingslab.com>
 Date: Thu, 18 May 2023 19:23:43 +0200
-Subject: [PATCH] contrib: change symlink to be relative
+Subject: [PATCH 1/4] qubes: change symlink to be relative
 MIME-Version: 1.0
 Content-Type: text/plain; charset=UTF-8
 Content-Transfer-Encoding: 8bit
@@ -31,5 +31,5 @@ index 0d7523c7d..549cac8ed 100644
    install_dir: '/usr/sbin',
  )
 -- 
-2.39.2
+2.44.0
 
