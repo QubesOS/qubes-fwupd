@@ -7,9 +7,8 @@ URL:       https://github.com/fwupd/fwupd
 Source0:   fwupd-%{version}.tar.xz
 Source1:   meson.build
 Patch1: 0001-qubes-change-symlink-to-be-relative.patch
-Patch2:    0001-qubes-fix-vendor-check-and-make-it-optional.patch
-Patch3: 0002-qubes-make-fwupdmgr-get-updates-think-it-s-interacti.patch
-Patch4:    0004-qubes-Make-vendor-check-case-insensitive.patch
+Patch2: 0002-qubes-make-fwupdmgr-get-updates-think-it-s-interacti.patch
+Patch3: 0003-qubes-Drop-custom-vendor-and-version-check.patch
 BuildArch: noarch
 
 BuildRequires: meson
