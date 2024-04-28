@@ -1,0 +1,44 @@
+From 3727369185b8d3468d245bb0d4feb0569383cf81 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Marek=20Marczykowski-G=C3=B3recki?=
+ <marmarek@invisiblethingslab.com>
+Date: Sat, 27 Apr 2024 03:24:27 +0200
+Subject: [PATCH 4/4] qubes: do not use deprecated 'imp' module in tests
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Signed-off-by: Marek Marczykowski-Górecki <marmarek@invisiblethingslab.com>
+---
+ contrib/qubes/test/test_qubes_fwupdmgr.py | 8 +++++---
+ 1 file changed, 5 insertions(+), 3 deletions(-)
+
+diff --git a/contrib/qubes/test/test_qubes_fwupdmgr.py b/contrib/qubes/test/test_qubes_fwupdmgr.py
+index 6d79058fb..057ae7bfb 100755
+--- a/contrib/qubes/test/test_qubes_fwupdmgr.py
++++ b/contrib/qubes/test/test_qubes_fwupdmgr.py
+@@ -12,7 +12,7 @@ import unittest
+ import os
+ import subprocess
+ import sys
+-import imp
++import importlib.util
+ import io
+ import platform
+ import tempfile
+@@ -27,9 +27,11 @@ QUBES_FWUPDMGR_REPO = "./src/qubes_fwupdmgr.py"
+ QUBES_FWUPDMGR_BINDIR = "/usr/sbin/qubes-fwupdmgr"
+ 
+ if os.path.exists(QUBES_FWUPDMGR_REPO):
+-    qfwupd = imp.load_source("qubes_fwupdmgr", QUBES_FWUPDMGR_REPO)
++    qfwupd_spec = importlib.util.spec_from_file_location("qubes_fwupdmgr", QUBES_FWUPDMGR_REPO)
+ elif os.path.exists(QUBES_FWUPDMGR_BINDIR):
+-    qfwupd = imp.load_source("qubes_fwupdmgr", QUBES_FWUPDMGR_BINDIR)
++    qfwupd_spec = importlib.util.spec_from_file_location("qubes_fwupdmgr", QUBES_FWUPDMGR_BINDIR)
++qfwupd = importlib.util.module_from_spec(qfwupd_spec)
++qfwupd_spec.loader.exec_module(qfwupd)
+ 
+ FWUPD_DOM0_DIR = "/var/cache/fwupd/qubes"
+ FWUPD_DOM0_UPDATES_DIR = os.path.join(FWUPD_DOM0_DIR, "updates")
+-- 
+2.44.0
+
