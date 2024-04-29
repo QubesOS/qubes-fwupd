@@ -1,3 +1,13 @@
+fwupd-qubes (1.8.17-1) unstable; urgency=medium
+
+  * Fix interactive prompt from fwupdmgr get-updates
+  * Update signing key
+  * Update to 1.8.17
+  * Remove extra vendor/version check from the qubes-fwupdmgr wrapper
+  * Do not use deprecated 'imp' library in tests
+
+ -- Marek Marczykowski-Górecki <marmarek@invisiblethingslab.com>  Mon, 29 Apr 2024 14:08:11 +0200
+
 fwupd-qubes (1.8.14-5) unstable; urgency=medium
 
   * Make vendor check case-insensitive
