@@ -10,6 +10,7 @@ Patch1: 0001-qubes-change-symlink-to-be-relative.patch
 Patch2: 0002-qubes-make-fwupdmgr-get-updates-think-it-s-interacti.patch
 Patch3: 0003-qubes-Drop-custom-vendor-and-version-check.patch
 Patch4: 0004-qubes-do-not-use-deprecated-imp-module-in-tests.patch
+Patch5: 0005-qubes-fix-checking-for-whonix-in-tests.patch
 BuildArch: noarch
 
 BuildRequires: meson

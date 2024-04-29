@@ -1,0 +1,33 @@
+From 5214fbcce9c3b949a9a76182dcfc4bf011cae5fe Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Marek=20Marczykowski-G=C3=B3recki?=
+ <marmarek@invisiblethingslab.com>
+Date: Mon, 29 Apr 2024 14:39:37 +0200
+Subject: [PATCH 5/5] qubes: fix checking for whonix in tests
+
+Do not rely on side effect of QubesFwupdmgr() constructor to save output
+from its last command, and call qvm-check directly instead.
+---
+ contrib/qubes/test/test_qubes_fwupdmgr.py | 7 +++++--
+ 1 file changed, 5 insertions(+), 2 deletions(-)
+
+diff --git a/contrib/qubes/test/test_qubes_fwupdmgr.py b/contrib/qubes/test/test_qubes_fwupdmgr.py
+index 9bedf9a95..cc20d38d2 100755
+--- a/contrib/qubes/test/test_qubes_fwupdmgr.py
++++ b/contrib/qubes/test/test_qubes_fwupdmgr.py
+@@ -60,8 +60,11 @@ def check_whonix_updatevm():
+     """Checks if the sys-whonix is running"""
+     if "qubes" not in platform.release():
+         return False
+-    q = qfwupd.QubesFwupdmgr()
+-    return "sys-whonix" in q.output
++    try:
++        p = subprocess.run(["qvm-check", "--running", "--quiet", "sys-whonix"])
++    except FileNotFoundError:
++        return False
++    return p.returncode == 0
+ 
+ 
+ class TestQubesFwupdmgr(unittest.TestCase):
+-- 
+2.44.0
+

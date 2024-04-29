@@ -1,8 +1,8 @@
-From 71d6e1b5e74a719fd43f88c108f9bbc775631562 Mon Sep 17 00:00:00 2001
+From bbf383693ac22c26fa64efca304633a3ddf5eeb6 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Marek=20Marczykowski-G=C3=B3recki?=
  <marmarek@invisiblethingslab.com>
 Date: Fri, 23 Jun 2023 03:25:28 +0200
-Subject: [PATCH 2/4] qubes: make 'fwupdmgr get-updates' think it's interactive
+Subject: [PATCH 2/5] qubes: make 'fwupdmgr get-updates' think it's interactive
 
 When stdout of fwupdmgr is redirected to a pipe, it assumes it's running
 non-interactive. This makes it not call
@@ -11,12 +11,11 @@ being listed.
 
 "Fix" this by using new pty for stdout capture, instead of a pipe.
 ---
- contrib/qubes/src/qubes_fwupdmgr.py       | 29 +++++++++++++++++++----
- contrib/qubes/test/test_qubes_fwupdmgr.py | 17 +++++++------
- 2 files changed, 34 insertions(+), 12 deletions(-)
+ contrib/qubes/src/qubes_fwupdmgr.py | 28 ++++++++++++++++++++++++----
+ 1 file changed, 24 insertions(+), 4 deletions(-)
 
 diff --git a/contrib/qubes/src/qubes_fwupdmgr.py b/contrib/qubes/src/qubes_fwupdmgr.py
-index a772b940a..b4bf5e679 100755
+index a772b940a..6c8347001 100755
 --- a/contrib/qubes/src/qubes_fwupdmgr.py
 +++ b/contrib/qubes/src/qubes_fwupdmgr.py
 @@ -7,9 +7,11 @@
@@ -31,18 +30,14 @@ index a772b940a..b4bf5e679 100755
  import shutil
  import subprocess
  import tempfile
-@@ -356,11 +358,28 @@ class QubesFwupdmgr(FwupdHeads, FwupdUpdate, FwupdReceiveUpdates):
-         ):
-             raise ValueError(f"{version} < {self.dmi_version} Downgrade not allowed")
- 
--    def _get_dom0_devices(self):
--        """Gathers information about devices connected in dom0."""
--        cmd_get_dom0_devices = [FWUPDMGR, "--json", "get-devices"]
--        p = subprocess.Popen(cmd_get_dom0_devices, stdout=subprocess.PIPE)
--        self.dom0_devices_info = p.communicate()[0].decode()
-+    def _get_dom0_updates(self):
-+        """Gathers information about available updates."""
-+        cmd_get_dom0_updates = [FWUPDMGR, "--json", "get-updates"]
+@@ -182,10 +184,28 @@ class QubesFwupdmgr(FwupdHeads, FwupdUpdate, FwupdReceiveUpdates):
+     def _get_dom0_updates(self):
+         """Gathers information about available updates."""
+         cmd_get_dom0_updates = [FWUPDMGR, "--json", "get-updates"]
+-        p = subprocess.Popen(cmd_get_dom0_updates, stdout=subprocess.PIPE)
+-        self.dom0_updates_info = p.communicate()[0].decode()
+-        if p.returncode != 0 and p.returncode != 2:
+-            raise Exception("fwupd-qubes: Getting available updates failed")
 +        # connect stdout to a pty, otherwise get-updates works in
 +        # non-interactive mode and doesn't list all the updates
 +        # (based on FWUUPD_FEATURE_* flags)
@@ -62,72 +57,12 @@ index a772b940a..b4bf5e679 100755
 +            data += new_data
 +        self.dom0_updates_info = data.decode()
 +        p.wait()
-         if p.returncode != 0:
-             raise Exception("fwupd-qubes: Getting devices info failed")
++        if p.returncode != 0:
++            raise Exception("fwupd-qubes: Getting devices info failed")
++
  
-diff --git a/contrib/qubes/test/test_qubes_fwupdmgr.py b/contrib/qubes/test/test_qubes_fwupdmgr.py
-index aa5a50897..4d1cc745b 100755
---- a/contrib/qubes/test/test_qubes_fwupdmgr.py
-+++ b/contrib/qubes/test/test_qubes_fwupdmgr.py
-@@ -50,7 +50,7 @@ def device_connected_dom0():
-     if "qubes" not in platform.release():
-         return False
-     q = qfwupd.QubesFwupdmgr()
--    q._get_dom0_devices()
-+    q._get_dom0_updates()
-     return "ColorHug2" in q.dom0_devices_info
- 
- 
-@@ -58,8 +58,11 @@ def check_whonix_updatevm():
-     """Checks if the sys-whonix is running"""
-     if "qubes" not in platform.release():
-         return False
--    q = qfwupd.QubesFwupdmgr()
--    return "sys-whonix" in q.output
-+    try:
-+        p = subprocess.run(["qvm-check", "--running", "--quiet", "sys-whonix"])
-+    except FileNotFoundError:
-+        return False
-+    return p.returncode == 0
- 
- 
- class TestQubesFwupdmgr(unittest.TestCase):
-@@ -251,7 +254,7 @@ class TestQubesFwupdmgr(unittest.TestCase):
- 
-     @unittest.skipUnless("qubes" in platform.release(), "Requires Qubes OS")
-     def test_get_dom0_devices(self):
--        self.q._get_dom0_devices()
-+        self.q._get_dom0_updates()
-         self.assertIsNotNone(self.q.dom0_devices_info)
- 
-     @unittest.skipUnless("qubes" in platform.release(), "Requires Qubes OS")
-@@ -326,7 +329,7 @@ class TestQubesFwupdmgr(unittest.TestCase):
-     @unittest.skipUnless(device_connected_dom0(), REQUIRED_DEV)
-     def test_downgrade_firmware_dom0(self):
-         old_version = None
--        self.q._get_dom0_devices()
-+        self.q._get_dom0_updates()
-         downgrades = self.q._parse_downgrades(self.q.dom0_devices_info)
-         for number, device in enumerate(downgrades):
-             if "Name" not in device:
-@@ -339,7 +342,7 @@ class TestQubesFwupdmgr(unittest.TestCase):
-         user_input = [str(number + 1), "1"]
-         with patch("builtins.input", side_effect=user_input):
-             self.q.downgrade_firmware()
--        self.q._get_dom0_devices()
-+        self.q._get_dom0_updates()
-         downgrades = self.q._parse_downgrades(self.q.dom0_devices_info)
-         new_version = downgrades[number]["Version"]
-         self.assertGreater(Version(old_version), Version(new_version))
-@@ -407,7 +410,7 @@ class TestQubesFwupdmgr(unittest.TestCase):
-         user_input = [str(number + 1)]
-         with patch("builtins.input", side_effect=user_input):
-             self.q.update_firmware()
--        self.q._get_dom0_devices()
-+        self.q._get_dom0_updates()
-         dom0_devices_info_dict = json.loads(self.q.dom0_devices_info)
-         for device in dom0_devices_info_dict["Devices"]:
-             if "Name" not in device:
+     def _parse_dom0_updates_info(self, updates_info):
+         """Creates dictionary and list with information about updates.
 -- 
 2.44.0
 

@@ -1,19 +1,14 @@
-From 54b80741fc13e8034cd7242bf84b28fd01cbd1e3 Mon Sep 17 00:00:00 2001
+From a2df45f7fd4f3bc7a3f9690d325dd2df926524b0 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Marek=20Marczykowski-G=C3=B3recki?=
  <marmarek@invisiblethingslab.com>
 Date: Thu, 18 May 2023 19:23:43 +0200
-Subject: [PATCH 1/4] qubes: change symlink to be relative
-MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
+Subject: [PATCH 1/5] qubes: change symlink to be relative
 
 Otherwise some meson versions complains:
 
     Installing /build/fwupd-qubes-1.8.14/contrib/qubes/src/qubes_fwupdmgr.py to /build/fwupd-qubes-1.8.14/debian/tmp/usr/share/qubes-fwupd/src
     ...
     ERROR: Tried to install symlink to missing file /usr/share/qubes-fwupd/src/qubes_fwupdmgr.py
-
-Signed-off-by: Marek Marczykowski-Górecki <marmarek@invisiblethingslab.com>
 ---
  contrib/qubes/meson.build | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)

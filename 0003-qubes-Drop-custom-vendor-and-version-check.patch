@@ -1,29 +1,24 @@
-From 1535b50e81ee160f2e3b941a1e7e0ab046ee8698 Mon Sep 17 00:00:00 2001
+From 2d7b9b195fc88bd62907b4eca73d5a98d5e54e9c Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Marek=20Marczykowski-G=C3=B3recki?=
  <marmarek@invisiblethingslab.com>
 Date: Sat, 27 Apr 2024 02:49:00 +0200
-Subject: [PATCH 3/4] qubes: Drop custom vendor and version check
-MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
+Subject: [PATCH 3/5] qubes: Drop custom vendor and version check
 
 fwupd verifies if firmware matches the device, skip the custom check
 that is much less robust. This avoids issues when firmware vendor
 changes some of the metadata like Framework did, but also the DMI
 parsing in the script doesn't match what fwupd does for example
 regarding version formatting.
-
-Signed-off-by: Marek Marczykowski-Górecki <marmarek@invisiblethingslab.com>
 ---
  contrib/qubes/src/qubes_fwupdmgr.py       | 47 -----------------------
  contrib/qubes/test/test_qubes_fwupdmgr.py | 45 ----------------------
  2 files changed, 92 deletions(-)
 
 diff --git a/contrib/qubes/src/qubes_fwupdmgr.py b/contrib/qubes/src/qubes_fwupdmgr.py
-index b4bf5e679..e070a4438 100755
+index 6c8347001..23ad0291f 100755
 --- a/contrib/qubes/src/qubes_fwupdmgr.py
 +++ b/contrib/qubes/src/qubes_fwupdmgr.py
-@@ -317,47 +317,6 @@ class QubesFwupdmgr(FwupdHeads, FwupdUpdate, FwupdReceiveUpdates):
+@@ -335,47 +335,6 @@ class QubesFwupdmgr(FwupdHeads, FwupdUpdate, FwupdReceiveUpdates):
          if p.returncode != 0:
              raise Exception("fwupd-qubes: Firmware update failed")
  
@@ -68,10 +63,10 @@ index b4bf5e679..e070a4438 100755
 -        ):
 -            raise ValueError(f"{version} < {self.dmi_version} Downgrade not allowed")
 -
-     def _get_dom0_updates(self):
-         """Gathers information about available updates."""
-         cmd_get_dom0_updates = [FWUPDMGR, "--json", "get-updates"]
-@@ -400,7 +359,6 @@ class QubesFwupdmgr(FwupdHeads, FwupdUpdate, FwupdReceiveUpdates):
+     def _get_dom0_devices(self):
+         """Gathers information about devices connected in dom0."""
+         cmd_get_dom0_devices = [FWUPDMGR, "--json", "get-devices"]
+@@ -401,7 +360,6 @@ class QubesFwupdmgr(FwupdHeads, FwupdUpdate, FwupdReceiveUpdates):
          self._download_firmware_updates(self.url, self.sha, whonix=whonix)
          if self.name == "System Firmware":
              Path(BIOS_UPDATE_FLAG).touch(mode=0o644, exist_ok=True)
@@ -79,7 +74,7 @@ index b4bf5e679..e070a4438 100755
          self._install_dom0_firmware_update(self.arch_path)
  
      def _parse_downgrades(self, device_list):
-@@ -469,11 +427,6 @@ class QubesFwupdmgr(FwupdHeads, FwupdUpdate, FwupdReceiveUpdates):
+@@ -470,11 +428,6 @@ class QubesFwupdmgr(FwupdHeads, FwupdUpdate, FwupdReceiveUpdates):
          self._download_firmware_updates(downgrade_url, downgrade_sha, whonix=whonix)
          if downgrade["Name"] == "System Firmware":
              Path(BIOS_UPDATE_FLAG).touch(mode=0o644, exist_ok=True)
@@ -92,10 +87,10 @@ index b4bf5e679..e070a4438 100755
  
      def _output_crawler(self, updev_dict, level, help_f=False):
 diff --git a/contrib/qubes/test/test_qubes_fwupdmgr.py b/contrib/qubes/test/test_qubes_fwupdmgr.py
-index 4d1cc745b..6d79058fb 100755
+index aa5a50897..3ea1087b4 100755
 --- a/contrib/qubes/test/test_qubes_fwupdmgr.py
 +++ b/contrib/qubes/test/test_qubes_fwupdmgr.py
-@@ -281,51 +281,6 @@ class TestQubesFwupdmgr(unittest.TestCase):
+@@ -278,51 +278,6 @@ class TestQubesFwupdmgr(unittest.TestCase):
              self.assertEqual(help_log.read(), help_output.getvalue().strip() + "\n")
          sys.stdout = self.captured_output
  
