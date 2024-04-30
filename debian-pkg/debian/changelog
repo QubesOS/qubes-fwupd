@@ -1,3 +1,9 @@
+fwupd-qubes (1.8.17-2) unstable; urgency=medium
+
+  * Fix patches from previous update, and a failed rebase
+
+ -- Marek Marczykowski-Górecki <marmarek@invisiblethingslab.com>  Tue, 30 Apr 2024 20:05:16 +0200
+
 fwupd-qubes (1.8.17-1) unstable; urgency=medium
 
   * Fix interactive prompt from fwupdmgr get-updates
