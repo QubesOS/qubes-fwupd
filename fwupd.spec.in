@@ -67,9 +67,9 @@ install -t $RPM_BUILD_ROOT/usr/share/qubes-fwupd/src src/*.py
 cp -r test $RPM_BUILD_ROOT/usr/share/qubes-fwupd/test
 install -d $RPM_BUILD_ROOT/usr/libexec/qubes-fwupd
 install -t $RPM_BUILD_ROOT/usr/libexec/qubes-fwupd src/vms/*.py
-install -d $RPM_BUILD_ROOT/usr/sbin
+install -d $RPM_BUILD_ROOT/usr/bin
 ln -s ../share/qubes-fwupd/src/qubes_fwupdmgr.py \
-    $RPM_BUILD_ROOT/usr/sbin/qubes-fwupdmgr
+    $RPM_BUILD_ROOT/usr/bin/qubes-fwupdmgr
 %endif
 
 %files vm
@@ -78,7 +78,7 @@ ln -s ../share/qubes-fwupd/src/qubes_fwupdmgr.py \
 
 %files dom0
 %{_datadir}/qubes-fwupd/src/fwupd_receive_updates.py
-%{_sbindir}/qubes-fwupdmgr
+%{_bindir}/qubes-fwupdmgr
 %{_datadir}/qubes-fwupd/src/qubes_fwupdmgr.py
 %{_datadir}/qubes-fwupd/src/qubes_fwupd_common.py
 %{_datadir}/qubes-fwupd/src/qubes_fwupd_heads.py

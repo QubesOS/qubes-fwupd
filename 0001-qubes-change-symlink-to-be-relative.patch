@@ -2,13 +2,15 @@ From a2df45f7fd4f3bc7a3f9690d325dd2df926524b0 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Marek=20Marczykowski-G=C3=B3recki?=
  <marmarek@invisiblethingslab.com>
 Date: Thu, 18 May 2023 19:23:43 +0200
-Subject: [PATCH 1/5] qubes: change symlink to be relative
+Subject: [PATCH 1/5] qubes: change symlink to be relative, and move to bin
 
 Otherwise some meson versions complains:
 
     Installing /build/fwupd-qubes-1.8.14/contrib/qubes/src/qubes_fwupdmgr.py to /build/fwupd-qubes-1.8.14/debian/tmp/usr/share/qubes-fwupd/src
     ...
     ERROR: Tried to install symlink to missing file /usr/share/qubes-fwupd/src/qubes_fwupdmgr.py
+
+Additionally move it to /usr/bin, to match fwupdmgr location in Fedora.
 ---
  contrib/qubes/meson.build | 2 +-
  1 file changed, 1 insertion(+), 1 deletion(-)
@@ -23,7 +25,8 @@ index 0d7523c7d..549cac8ed 100644
    'qubes-fwupdmgr',
 -  pointing_to: '/usr/share/qubes-fwupd/src/qubes_fwupdmgr.py',
 +  pointing_to: '../share/qubes-fwupd/src/qubes_fwupdmgr.py',
-   install_dir: '/usr/sbin',
+-  install_dir: '/usr/sbin',
++  install_dir: '/usr/bin',
  )
 -- 
 2.44.0
