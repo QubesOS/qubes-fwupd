@@ -44,8 +44,7 @@ fwupd wrapper for Qubes OS
 %autosetup -p1 -n fwupd-%{version}
 #override meson.build to handle just qubes part
 cp %{SOURCE1} ./
-grep qubes meson_options.txt > meson_options.txt.new
-mv -f meson_options.txt.new meson_options.txt
+echo "option('qubes', type: 'boolean', value: false, description: 'Qubes support')" > meson_options.txt
 
 %build
 

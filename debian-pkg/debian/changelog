@@ -1,3 +1,11 @@
+fwupd-qubes (1.9.28-1) unstable; urgency=medium
+
+  * Move qubes-fwupdmgr to /usr/bin
+  * ci: switch to R4.3
+  * version 1.9.28-1
+
+ -- Marek Marczykowski-Górecki <marmarek@invisiblethingslab.com>  Fri, 28 Feb 2025 01:56:37 +0100
+
 fwupd-qubes (1.8.17-2) unstable; urgency=medium
 
   * Fix patches from previous update, and a failed rebase
