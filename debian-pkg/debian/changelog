@@ -1,3 +1,9 @@
+fwupd-qubes (1.8.17-3) unstable; urgency=medium
+
+  * Move qubes-fwupdmgr to /usr/bin
+
+ -- Marek Marczykowski-Górecki <marmarek@invisiblethingslab.com>  Sun, 08 Jun 2025 03:18:19 +0200
+
 fwupd-qubes (1.8.17-2) unstable; urgency=medium
 
   * Fix patches from previous update, and a failed rebase
