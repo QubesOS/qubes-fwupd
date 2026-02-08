@@ -1,0 +1,216 @@
+From db35488a6a240ae1766e3868c06700f83c3a0ed5 Mon Sep 17 00:00:00 2001
+From: Matt McCutchen <matt@mattmccutchen.net>
+Date: Mon, 26 Jan 2026 16:50:40 -0500
+Subject: [PATCH 09/10] qubes: use `Locations[0]` field of update instead of
+ `Uri`
+
+This updates the Qubes OS code to cope with
+51cf6674435ece2febab15e8fe645d77eea70056.
+
+Also update the test data to have `Locations` and not `Uri`.
+---
+ contrib/qubes/src/qubes_fwupdmgr.py |  4 +--
+ contrib/qubes/test/fwupd_logs.py    | 53 ++++++++++++++++++++---------
+ 2 files changed, 38 insertions(+), 19 deletions(-)
+
+diff --git a/contrib/qubes/src/qubes_fwupdmgr.py b/contrib/qubes/src/qubes_fwupdmgr.py
+index f876d0a12..6ffe01012 100755
+--- a/contrib/qubes/src/qubes_fwupdmgr.py
++++ b/contrib/qubes/src/qubes_fwupdmgr.py
+@@ -214,7 +214,7 @@ class QubesFwupdmgr(FwupdHeads, FwupdUpdate, FwupdReceiveUpdates):
+                 "Releases": [
+                     {
+                         "Version": update["Version"],
+-                        "Url": update["Uri"],
++                        "Url": update["Locations"][0],
+                         "Checksum": update["Checksum"][-1],
+                         "Description": update["Description"],
+                     }
+@@ -379,7 +379,7 @@ class QubesFwupdmgr(FwupdHeads, FwupdUpdate, FwupdReceiveUpdates):
+                             {
+                                 "Version": downgrade["Version"],
+                                 "Description": downgrade["Description"],
+-                                "Url": downgrade["Uri"],
++                                "Url": downgrade["Locations"][0],
+                                 "Checksum": downgrade["Checksum"][-1],
+                             }
+                             for downgrade in device["Releases"]
+diff --git a/contrib/qubes/test/fwupd_logs.py b/contrib/qubes/test/fwupd_logs.py
+index 8a87a5ac3..ceb935292 100644
+--- a/contrib/qubes/test/fwupd_logs.py
++++ b/contrib/qubes/test/fwupd_logs.py
+@@ -57,7 +57,6 @@ UPDATE_INFO = """{
+                                "https://fwupd.org/downloads/0a29848de74d26348bc5a6e24fc9f03778eddf0e-hughski-colorhug2-2.0.7.cab",
+                                "ipfs://QmUByRuHG9Gb2s8gKKVqDcjhUrn8vy62B4WqjbpWDD42cf"
+                            ],
+-                           "Uri" : "https://fwupd.org/downloads/0a29848de74d26348bc5a6e24fc9f03778eddf0e-hughski-colorhug2-2.0.7.cab",
+                            "Homepage" : "http://www.hughski.com/",
+                            "SourceUrl" : "https://github.com/hughski/colorhug2-firmware",
+                            "Vendor" : "Hughski Limited",
+@@ -156,7 +155,6 @@ GET_DEVICES = """{
+             "https://fwupd.org/downloads/0a29848de74d26348bc5a6e24fc9f03778eddf0e-hughski-colorhug2-2.0.7.cab",
+             "ipfs://QmUByRuHG9Gb2s8gKKVqDcjhUrn8vy62B4WqjbpWDD42cf"
+           ],
+-          "Uri" : "https://fwupd.org/downloads/0a29848de74d26348bc5a6e24fc9f03778eddf0e-hughski-colorhug2-2.0.7.cab",
+           "Homepage" : "http://www.hughski.com/",
+           "SourceUrl" : "https://github.com/hughski/colorhug2-firmware",
+           "Vendor" : "Hughski Limited",
+@@ -184,7 +182,6 @@ GET_DEVICES = """{
+             "https://fwupd.org/downloads/170f2c19f17b7819644d3fcc7617621cc3350a04-hughski-colorhug2-2.0.6.cab",
+             "ipfs://QmdWFrYo1YJxgGU37Qy7LkwPQM26vPMVxLRANUga6TzSjW"
+           ],
+-          "Uri" : "https://fwupd.org/downloads/170f2c19f17b7819644d3fcc7617621cc3350a04-hughski-colorhug2-2.0.6.cab",
+           "Homepage" : "http://www.hughski.com/",
+           "SourceUrl" : "https://github.com/hughski/colorhug2-firmware",
+           "Vendor" : "Hughski Limited",
+@@ -209,7 +206,6 @@ GET_DEVICES = """{
+             "https://fwupd.org/downloads/f7dd4ab29fa610438571b8b62b26b0b0e57bb35b-hughski-colorhug2-2.0.5.cab",
+             "ipfs://QmQ648kwvv52wuqPoKjm5zLGXngQnmuJzp1xtJmTEbzgz5"
+           ],
+-          "Uri" : "https://fwupd.org/downloads/f7dd4ab29fa610438571b8b62b26b0b0e57bb35b-hughski-colorhug2-2.0.5.cab",
+           "Homepage" : "http://www.hughski.com/",
+           "SourceUrl" : "https://github.com/hughski/colorhug2-firmware",
+           "Vendor" : "Hughski Limited",
+@@ -237,7 +233,6 @@ GET_DEVICES = """{
+             "https://fwupd.org/downloads/30a121f26c039745aeb5585252d4a9b5386d71cb-hughski-colorhug2-2.0.2.cab",
+             "ipfs://QmZ1DKKsWZQuvnff2DJTDJESMaXTpsc5zfNGX7Sb2HibAn"
+           ],
+-          "Uri" : "https://fwupd.org/downloads/30a121f26c039745aeb5585252d4a9b5386d71cb-hughski-colorhug2-2.0.2.cab",
+           "Homepage" : "http://www.hughski.com/",
+           "SourceUrl" : "https://github.com/hughski/colorhug2-firmware",
+           "Vendor" : "Hughski Limited",
+@@ -340,7 +335,9 @@ GET_DEVICES_NO_UPDATES = """{
+                     "License" : "GPL-2.0+",
+                     "Size" : 16384,
+                     "Created" : 1482901200,
+-                    "Uri" : "https://fwupd.org/downloads/0a29848de74d26348bc5a6e24fc9f03778eddf0e-hughski-colorhug2-2.0.7.cab",
++                    "Locations" : [
++                        "https://fwupd.org/downloads/0a29848de74d26348bc5a6e24fc9f03778eddf0e-hughski-colorhug2-2.0.7.cab"
++                    ],
+                     "Homepage" : "http://www.hughski.com/",
+                     "SourceUrl" : "https://github.com/hughski/colorhug2-firmware",
+                     "Vendor" : "Hughski Limited",
+@@ -360,7 +357,9 @@ GET_DEVICES_NO_UPDATES = """{
+                     "License" : "GPL-2.0+",
+                     "Size" : 16384,
+                     "Created" : 1450792062,
+-                    "Uri" : "https://fwupd.org/downloads/170f2c19f17b7819644d3fcc7617621cc3350a04-hughski-colorhug2-2.0.6.cab",
++                    "Locations" : [
++                        "https://fwupd.org/downloads/170f2c19f17b7819644d3fcc7617621cc3350a04-hughski-colorhug2-2.0.6.cab"
++                    ],
+                     "Homepage" : "http://www.hughski.com/",
+                     "SourceUrl" : "https://github.com/hughski/colorhug2-firmware",
+                     "Vendor" : "Hughski Limited",
+@@ -383,7 +382,9 @@ GET_DEVICES_NO_UPDATES = """{
+                     "License" : "GPL-2.0+",
+                     "Size" : 16384,
+                     "Created" : 1444059405,
+-                    "Uri" : "https://fwupd.org/downloads/f7dd4ab29fa610438571b8b62b26b0b0e57bb35b-hughski-colorhug2-2.0.5.cab",
++                    "Locations" : [
++                        "https://fwupd.org/downloads/f7dd4ab29fa610438571b8b62b26b0b0e57bb35b-hughski-colorhug2-2.0.5.cab"
++                    ],
+                     "Homepage" : "http://www.hughski.com/",
+                     "SourceUrl" : "https://github.com/hughski/colorhug2-firmware",
+                     "Vendor" : "Hughski Limited",
+@@ -406,7 +407,9 @@ GET_DEVICES_NO_UPDATES = """{
+                     "License" : "GPL-2.0+",
+                     "Size" : 15680,
+                     "Created" : 1416675439,
+-                    "Uri" : "https://fwupd.org/downloads/30a121f26c039745aeb5585252d4a9b5386d71cb-hughski-colorhug2-2.0.2.cab",
++                    "Locations" : [
++                        "https://fwupd.org/downloads/30a121f26c039745aeb5585252d4a9b5386d71cb-hughski-colorhug2-2.0.2.cab"
++                    ],
+                     "Homepage" : "http://www.hughski.com/",
+                     "SourceUrl" : "https://github.com/hughski/colorhug2-firmware",
+                     "Vendor" : "Hughski Limited",
+@@ -530,7 +533,9 @@ GET_DEVICES_NO_VERSION = """{
+                     "License" : "GPL-2.0+",
+                     "Size" : 16384,
+                     "Created" : 1482901200,
+-                    "Uri" : "https://fwupd.org/downloads/0a29848de74d26348bc5a6e24fc9f03778eddf0e-hughski-colorhug2-2.0.7.cab",
++                    "Locations" : [
++                        "https://fwupd.org/downloads/0a29848de74d26348bc5a6e24fc9f03778eddf0e-hughski-colorhug2-2.0.7.cab"
++                    ],
+                     "Homepage" : "http://www.hughski.com/",
+                     "SourceUrl" : "https://github.com/hughski/colorhug2-firmware",
+                     "Vendor" : "Hughski Limited",
+@@ -549,7 +554,9 @@ GET_DEVICES_NO_VERSION = """{
+                     "License" : "GPL-2.0+",
+                     "Size" : 16384,
+                     "Created" : 1450792062,
+-                    "Uri" : "https://fwupd.org/downloads/170f2c19f17b7819644d3fcc7617621cc3350a04-hughski-colorhug2-2.0.6.cab",
++                    "Locations" : [
++                        "https://fwupd.org/downloads/170f2c19f17b7819644d3fcc7617621cc3350a04-hughski-colorhug2-2.0.6.cab"
++                    ],
+                     "Homepage" : "http://www.hughski.com/",
+                     "SourceUrl" : "https://github.com/hughski/colorhug2-firmware",
+                     "Vendor" : "Hughski Limited",
+@@ -572,7 +579,9 @@ GET_DEVICES_NO_VERSION = """{
+                     "License" : "GPL-2.0+",
+                     "Size" : 16384,
+                     "Created" : 1444059405,
+-                    "Uri" : "https://fwupd.org/downloads/f7dd4ab29fa610438571b8b62b26b0b0e57bb35b-hughski-colorhug2-2.0.5.cab",
++                    "Locations" : [
++                        "https://fwupd.org/downloads/f7dd4ab29fa610438571b8b62b26b0b0e57bb35b-hughski-colorhug2-2.0.5.cab"
++                    ],
+                     "Homepage" : "http://www.hughski.com/",
+                     "SourceUrl" : "https://github.com/hughski/colorhug2-firmware",
+                     "Vendor" : "Hughski Limited",
+@@ -595,7 +604,9 @@ GET_DEVICES_NO_VERSION = """{
+                     "License" : "GPL-2.0+",
+                     "Size" : 15680,
+                     "Created" : 1416675439,
+-                    "Uri" : "https://fwupd.org/downloads/30a121f26c039745aeb5585252d4a9b5386d71cb-hughski-colorhug2-2.0.2.cab",
++                    "Locations" : [
++                        "https://fwupd.org/downloads/30a121f26c039745aeb5585252d4a9b5386d71cb-hughski-colorhug2-2.0.2.cab"
++                    ],
+                     "Homepage" : "http://www.hughski.com/",
+                     "SourceUrl" : "https://github.com/hughski/colorhug2-firmware",
+                     "Vendor" : "Hughski Limited",
+@@ -649,7 +660,9 @@ GET_DEVICES_NO_VERSION = """{
+                     "License" : "GPL-2.0+",
+                     "Size" : 16384,
+                     "Created" : 1482901200,
+-                    "Uri" : "https://fwupd.org/downloads/0a29848de74d26348bc5a6e24fc9f03778eddf0e-hughski-colorhug2-2.0.7.cab",
++                    "Locations" : [
++                        "https://fwupd.org/downloads/0a29848de74d26348bc5a6e24fc9f03778eddf0e-hughski-colorhug2-2.0.7.cab"
++                    ],
+                     "Homepage" : "http://www.hughski.com/",
+                     "SourceUrl" : "https://github.com/hughski/colorhug2-firmware",
+                     "Vendor" : "Hughski Limited",
+@@ -669,7 +682,9 @@ GET_DEVICES_NO_VERSION = """{
+                     "License" : "GPL-2.0+",
+                     "Size" : 16384,
+                     "Created" : 1450792062,
+-                    "Uri" : "https://fwupd.org/downloads/170f2c19f17b7819644d3fcc7617621cc3350a04-hughski-colorhug2-2.0.6.cab",
++                    "Locations" : [
++                        "https://fwupd.org/downloads/170f2c19f17b7819644d3fcc7617621cc3350a04-hughski-colorhug2-2.0.6.cab"
++                    ],
+                     "Homepage" : "http://www.hughski.com/",
+                     "SourceUrl" : "https://github.com/hughski/colorhug2-firmware",
+                     "Vendor" : "Hughski Limited",
+@@ -692,7 +707,9 @@ GET_DEVICES_NO_VERSION = """{
+                     "License" : "GPL-2.0+",
+                     "Size" : 16384,
+                     "Created" : 1444059405,
+-                    "Uri" : "https://fwupd.org/downloads/f7dd4ab29fa610438571b8b62b26b0b0e57bb35b-hughski-colorhug2-2.0.5.cab",
++                    "Locations" : [
++                        "https://fwupd.org/downloads/f7dd4ab29fa610438571b8b62b26b0b0e57bb35b-hughski-colorhug2-2.0.5.cab"
++                    ],
+                     "Homepage" : "http://www.hughski.com/",
+                     "SourceUrl" : "https://github.com/hughski/colorhug2-firmware",
+                     "Vendor" : "Hughski Limited",
+@@ -715,7 +732,9 @@ GET_DEVICES_NO_VERSION = """{
+                     "License" : "GPL-2.0+",
+                     "Size" : 15680,
+                     "Created" : 1416675439,
+-                    "Uri" : "https://fwupd.org/downloads/30a121f26c039745aeb5585252d4a9b5386d71cb-hughski-colorhug2-2.0.2.cab",
++                    "Locations" : [
++                        "https://fwupd.org/downloads/30a121f26c039745aeb5585252d4a9b5386d71cb-hughski-colorhug2-2.0.2.cab"
++                    ],
+                     "Homepage" : "http://www.hughski.com/",
+                     "SourceUrl" : "https://github.com/hughski/colorhug2-firmware",
+                     "Vendor" : "Hughski Limited",
+-- 
+2.52.0
+

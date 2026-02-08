@@ -1,0 +1,27 @@
+From a2608cc6917c471ee27debd262907e3477366855 Mon Sep 17 00:00:00 2001
+From: Matt McCutchen <matt@mattmccutchen.net>
+Date: Mon, 12 Jan 2026 11:28:18 -0500
+Subject: [PATCH 08/10] qubes: treat remote `Enabled` field as a JSON boolean
+
+This updates the Qubes OS code to match
+eee24b164255d655a8586569a682024d83266e98.
+---
+ contrib/qubes/src/qubes_fwupdmgr.py | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/contrib/qubes/src/qubes_fwupdmgr.py b/contrib/qubes/src/qubes_fwupdmgr.py
+index 646aa1a47..f876d0a12 100755
+--- a/contrib/qubes/src/qubes_fwupdmgr.py
++++ b/contrib/qubes/src/qubes_fwupdmgr.py
+@@ -113,7 +113,7 @@ class QubesFwupdmgr(FwupdHeads, FwupdUpdate, FwupdReceiveUpdates):
+         for remote in remotes_list:
+             name = remote["Id"]
+             # skip disabled
+-            if remote.get("Enabled", "true") != "true":
++            if not remote.get("Enabled", True):
+                 continue
+             # skip local - for metadata refresh, we only care about those
+             # actually needing refreshing
+-- 
+2.52.0
+
