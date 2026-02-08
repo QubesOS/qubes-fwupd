@@ -1,4 +1,4 @@
-From bbf383693ac22c26fa64efca304633a3ddf5eeb6 Mon Sep 17 00:00:00 2001
+From 32ac17066904f1393fe886781f88456aad6099db Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Marek=20Marczykowski-G=C3=B3recki?=
  <marmarek@invisiblethingslab.com>
 Date: Fri, 23 Jun 2023 03:25:28 +0200
@@ -15,22 +15,21 @@ being listed.
  1 file changed, 24 insertions(+), 4 deletions(-)
 
 diff --git a/contrib/qubes/src/qubes_fwupdmgr.py b/contrib/qubes/src/qubes_fwupdmgr.py
-index a772b940a..6c8347001 100755
+index 91707f8b1..737db7e97 100755
 --- a/contrib/qubes/src/qubes_fwupdmgr.py
 +++ b/contrib/qubes/src/qubes_fwupdmgr.py
-@@ -7,9 +7,11 @@
- # SPDX-License-Identifier: LGPL-2.1+
+@@ -7,8 +7,10 @@
+ # SPDX-License-Identifier: LGPL-2.1-or-later
  #
  
 +import errno
  import json
  import os
- import re
 +import pty
  import shutil
  import subprocess
  import tempfile
-@@ -182,10 +184,28 @@ class QubesFwupdmgr(FwupdHeads, FwupdUpdate, FwupdReceiveUpdates):
+@@ -174,10 +176,28 @@ class QubesFwupdmgr(FwupdHeads, FwupdUpdate, FwupdReceiveUpdates):
      def _get_dom0_updates(self):
          """Gathers information about available updates."""
          cmd_get_dom0_updates = [FWUPDMGR, "--json", "get-updates"]
@@ -64,5 +63,5 @@ index a772b940a..6c8347001 100755
      def _parse_dom0_updates_info(self, updates_info):
          """Creates dictionary and list with information about updates.
 -- 
-2.44.0
+2.51.0
 

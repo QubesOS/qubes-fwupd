@@ -1,4 +1,4 @@
-From a2df45f7fd4f3bc7a3f9690d325dd2df926524b0 Mon Sep 17 00:00:00 2001
+From ac55aa9697f292302a15be935b565efb1fc1f717 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Marek=20Marczykowski-G=C3=B3recki?=
  <marmarek@invisiblethingslab.com>
 Date: Thu, 18 May 2023 19:23:43 +0200
@@ -12,11 +12,11 @@ Otherwise some meson versions complains:
 
 Additionally move it to /usr/bin, to match fwupdmgr location in Fedora.
 ---
- contrib/qubes/meson.build | 2 +-
- 1 file changed, 1 insertion(+), 1 deletion(-)
+ contrib/qubes/meson.build | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
 
 diff --git a/contrib/qubes/meson.build b/contrib/qubes/meson.build
-index 0d7523c7d..549cac8ed 100644
+index 9b5385e15..fb72dd70e 100644
 --- a/contrib/qubes/meson.build
 +++ b/contrib/qubes/meson.build
 @@ -48,6 +48,6 @@ install_data(
@@ -24,10 +24,10 @@ index 0d7523c7d..549cac8ed 100644
  install_symlink(
    'qubes-fwupdmgr',
 -  pointing_to: '/usr/share/qubes-fwupd/src/qubes_fwupdmgr.py',
-+  pointing_to: '../share/qubes-fwupd/src/qubes_fwupdmgr.py',
 -  install_dir: '/usr/sbin',
++  pointing_to: '../share/qubes-fwupd/src/qubes_fwupdmgr.py',
 +  install_dir: '/usr/bin',
  )
 -- 
-2.44.0
+2.51.0
 

@@ -6,7 +6,7 @@ License:   LGPLv2+
 URL:       https://github.com/fwupd/fwupd
 Source0:   fwupd-%{version}.tar.xz
 Source1:   meson.build
-Patch1: 0001-qubes-change-symlink-to-be-relative.patch
+Patch1: 0001-qubes-change-symlink-to-be-relative-and-move-to-bin.patch
 Patch2: 0002-qubes-make-fwupdmgr-get-updates-think-it-s-interacti.patch
 Patch3: 0003-qubes-Drop-custom-vendor-and-version-check.patch
 Patch4: 0004-qubes-do-not-use-deprecated-imp-module-in-tests.patch

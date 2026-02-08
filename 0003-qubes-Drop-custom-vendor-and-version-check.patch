@@ -1,4 +1,4 @@
-From 2d7b9b195fc88bd62907b4eca73d5a98d5e54e9c Mon Sep 17 00:00:00 2001
+From 1b8c3c2ffc06f07ad8bc01607ff8402c6e162b35 Mon Sep 17 00:00:00 2001
 From: =?UTF-8?q?Marek=20Marczykowski-G=C3=B3recki?=
  <marmarek@invisiblethingslab.com>
 Date: Sat, 27 Apr 2024 02:49:00 +0200
@@ -11,14 +11,14 @@ parsing in the script doesn't match what fwupd does for example
 regarding version formatting.
 ---
  contrib/qubes/src/qubes_fwupdmgr.py       | 47 -----------------------
- contrib/qubes/test/test_qubes_fwupdmgr.py | 45 ----------------------
- 2 files changed, 92 deletions(-)
+ contrib/qubes/test/test_qubes_fwupdmgr.py | 46 ----------------------
+ 2 files changed, 93 deletions(-)
 
 diff --git a/contrib/qubes/src/qubes_fwupdmgr.py b/contrib/qubes/src/qubes_fwupdmgr.py
-index 6c8347001..23ad0291f 100755
+index 737db7e97..3555e317c 100755
 --- a/contrib/qubes/src/qubes_fwupdmgr.py
 +++ b/contrib/qubes/src/qubes_fwupdmgr.py
-@@ -335,47 +335,6 @@ class QubesFwupdmgr(FwupdHeads, FwupdUpdate, FwupdReceiveUpdates):
+@@ -327,47 +327,6 @@ class QubesFwupdmgr(FwupdHeads, FwupdUpdate, FwupdReceiveUpdates):
          if p.returncode != 0:
              raise Exception("fwupd-qubes: Firmware update failed")
  
@@ -66,7 +66,7 @@ index 6c8347001..23ad0291f 100755
      def _get_dom0_devices(self):
          """Gathers information about devices connected in dom0."""
          cmd_get_dom0_devices = [FWUPDMGR, "--json", "get-devices"]
-@@ -401,7 +360,6 @@ class QubesFwupdmgr(FwupdHeads, FwupdUpdate, FwupdReceiveUpdates):
+@@ -393,7 +352,6 @@ class QubesFwupdmgr(FwupdHeads, FwupdUpdate, FwupdReceiveUpdates):
          self._download_firmware_updates(self.url, self.sha, whonix=whonix)
          if self.name == "System Firmware":
              Path(BIOS_UPDATE_FLAG).touch(mode=0o644, exist_ok=True)
@@ -74,7 +74,7 @@ index 6c8347001..23ad0291f 100755
          self._install_dom0_firmware_update(self.arch_path)
  
      def _parse_downgrades(self, device_list):
-@@ -470,11 +428,6 @@ class QubesFwupdmgr(FwupdHeads, FwupdUpdate, FwupdReceiveUpdates):
+@@ -462,11 +420,6 @@ class QubesFwupdmgr(FwupdHeads, FwupdUpdate, FwupdReceiveUpdates):
          self._download_firmware_updates(downgrade_url, downgrade_sha, whonix=whonix)
          if downgrade["Name"] == "System Firmware":
              Path(BIOS_UPDATE_FLAG).touch(mode=0o644, exist_ok=True)
@@ -87,10 +87,10 @@ index 6c8347001..23ad0291f 100755
  
      def _output_crawler(self, updev_dict, level, help_f=False):
 diff --git a/contrib/qubes/test/test_qubes_fwupdmgr.py b/contrib/qubes/test/test_qubes_fwupdmgr.py
-index aa5a50897..3ea1087b4 100755
+index 825d90b53..a6931b2d0 100755
 --- a/contrib/qubes/test/test_qubes_fwupdmgr.py
 +++ b/contrib/qubes/test/test_qubes_fwupdmgr.py
-@@ -278,51 +278,6 @@ class TestQubesFwupdmgr(unittest.TestCase):
+@@ -277,52 +277,6 @@ class TestQubesFwupdmgr(unittest.TestCase):
              self.assertEqual(help_log.read(), help_output.getvalue().strip() + "\n")
          sys.stdout = self.captured_output
  
@@ -103,7 +103,8 @@ index aa5a50897..3ea1087b4 100755
 -        with tempfile.TemporaryDirectory() as tmpdir:
 -            arch_name = tmpdir + "/firmware.cab"
 -            subprocess.check_call(
--                ["gcab", "-c", arch_name, "firmware.metainfo.xml"], cwd="test/logs"
+-                ["fwupdtool", "build-cabinet", arch_name, "firmware.metainfo.xml"],
+-                cwd="test/logs",
 -            )
 -            self.q._verify_dmi(arch_name, "P1.1")
 -
@@ -117,7 +118,7 @@ index aa5a50897..3ea1087b4 100755
 -            with tempfile.TemporaryDirectory() as tmpdir:
 -                arch_name = tmpdir + "/firmware.cab"
 -                subprocess.check_call(
--                    ["gcab", "-c", arch_name, "firmware.metainfo.xml"],
+-                    ["fwupdtool", "build-cabinet", arch_name, "firmware.metainfo.xml"],
 -                    cwd="test/logs/metainfo_name",
 -                )
 -                self.q._verify_dmi(arch_name, "P1.1")
@@ -133,7 +134,7 @@ index aa5a50897..3ea1087b4 100755
 -            with tempfile.TemporaryDirectory() as tmpdir:
 -                arch_name = tmpdir + "/firmware.cab"
 -                subprocess.check_call(
--                    ["gcab", "-c", arch_name, "firmware.metainfo.xml"],
+-                    ["fwupdtool", "build-cabinet", arch_name, "firmware.metainfo.xml"],
 -                    cwd="test/logs/metainfo_version",
 -                )
 -                self.q._verify_dmi(arch_name, "P0.1")
@@ -143,5 +144,5 @@ index aa5a50897..3ea1087b4 100755
      def test_downgrade_firmware_dom0(self):
          old_version = None
 -- 
-2.44.0
+2.51.0
 
