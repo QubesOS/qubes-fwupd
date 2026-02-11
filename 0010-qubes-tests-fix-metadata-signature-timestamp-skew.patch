@@ -1,0 +1,123 @@
+From e83127c4c793e75262d9b9c597092a97f3343fdc Mon Sep 17 00:00:00 2001
+From: Matt McCutchen <matt@mattmccutchen.net>
+Date: Tue, 27 Jan 2026 12:45:06 -0500
+Subject: [PATCH 10/10] qubes tests: fix metadata signature timestamp skew
+
+fwupdmgr refuses to refresh metadata if the new metadata has an older
+signature timestamp than the existing metadata. Fix two ways this could
+happen in the tests:
+
+- A normal refresh uses firmware.xml.zst as specified by the lvfs
+  remote, but test_refresh_metadata_dom0 used firmware.xml.xz. Change it
+  to use the URL from the lvfs remote (which is what we'd rather be
+  testing anyway).
+
+- test_refresh_metadata_dom0_custom used a custom metadata file and
+  assumed it was older than the default firmware.xml.zst, which is no
+  longer a valid assumption. Instead, bypass the timestamp check by
+  deleting fwupd's copy of the metadata before and after the test.
+---
+ contrib/qubes/src/qubes_fwupdmgr.py       |  7 ++++
+ contrib/qubes/test/test_qubes_fwupdmgr.py | 43 ++++++++++++++++++-----
+ 2 files changed, 41 insertions(+), 9 deletions(-)
+
+diff --git a/contrib/qubes/src/qubes_fwupdmgr.py b/contrib/qubes/src/qubes_fwupdmgr.py
+index 6ffe01012..3c88afd13 100755
+--- a/contrib/qubes/src/qubes_fwupdmgr.py
++++ b/contrib/qubes/src/qubes_fwupdmgr.py
+@@ -43,6 +43,13 @@ FWUPD_DOM0_DIR = "/var/cache/fwupd/qubes"
+ FWUPD_DOM0_METADATA_DIR = os.path.join(FWUPD_DOM0_DIR, "metadata")
+ FWUPD_DOM0_UPDATES_DIR = os.path.join(FWUPD_DOM0_DIR, "updates")
+ FWUPD_DOWNLOAD_PREFIX = "https://fwupd.org/downloads/"
++# Warning: As of 2026-01-27, the lvfs remote has switched to using
++# firmware.xml.zst, and `qubes-fwupdmgr refresh` honors that configuration by
++# default. If any code tried to use these URLs to refresh the main fwupd
++# metadata, it would be liable to run into errors due to skew between the
++# signature timestamps of the xz and zst files. Currently, these URLs appear to
++# be used only by the Heads code, which doesn't support the zst format, so they
++# can't be changed at the moment.
+ METADATA_URL = "https://fwupd.org/downloads/firmware.xml.xz"
+ METADATA_URL_JCAT = "https://fwupd.org/downloads/firmware.xml.xz.jcat"
+ 
+diff --git a/contrib/qubes/test/test_qubes_fwupdmgr.py b/contrib/qubes/test/test_qubes_fwupdmgr.py
+index cc20d38d2..ffbe9205b 100755
+--- a/contrib/qubes/test/test_qubes_fwupdmgr.py
++++ b/contrib/qubes/test/test_qubes_fwupdmgr.py
+@@ -33,6 +33,7 @@ elif os.path.exists(QUBES_FWUPDMGR_BINDIR):
+ qfwupd = importlib.util.module_from_spec(qfwupd_spec)
+ qfwupd_spec.loader.exec_module(qfwupd)
+ 
++FWUPD_METADATA_LVFS_DIR = "/var/lib/fwupd/metadata/lvfs"
+ FWUPD_DOM0_DIR = "/var/cache/fwupd/qubes"
+ FWUPD_DOM0_UPDATES_DIR = os.path.join(FWUPD_DOM0_DIR, "updates")
+ FWUPD_DOM0_UNTRUSTED_DIR = os.path.join(FWUPD_DOM0_UPDATES_DIR, "untrusted")
+@@ -67,6 +68,11 @@ def check_whonix_updatevm():
+     return p.returncode == 0
+ 
+ 
++def clear_lvfs_metadata():
++    for fname in os.listdir(FWUPD_METADATA_LVFS_DIR):
++        os.unlink(os.path.join(FWUPD_METADATA_LVFS_DIR, fname))
++
++
+ class TestQubesFwupdmgr(unittest.TestCase):
+     def setUp(self):
+         self.q = qfwupd.QubesFwupdmgr()
+@@ -122,7 +128,7 @@ class TestQubesFwupdmgr(unittest.TestCase):
+ 
+     @unittest.skipUnless("qubes" in platform.release(), "Requires Qubes OS")
+     def test_refresh_metadata_dom0(self):
+-        self.q.refresh_metadata(metadata_url=qfwupd.METADATA_URL)
++        self.q.refresh_metadata(remote_name="lvfs")
+         self.assertEqual(
+             self.captured_output.getvalue().strip(),
+             "Successfully refreshed metadata manually",
+@@ -130,18 +136,37 @@ class TestQubesFwupdmgr(unittest.TestCase):
+         )
+ 
+     @unittest.skipUnless("qubes" in platform.release(), "Requires Qubes OS")
+-    @unittest.expectedFailure  # fwupd refuses metadata downgrade
+     def test_refresh_metadata_dom0_custom(self):
+-        self.q.refresh_metadata(metadata_url=CUSTOM_METADATA)
+-        self.assertEqual(
+-            self.captured_output.getvalue().strip(),
+-            "Successfully refreshed metadata manually",
+-            msg="Metadata refresh failed.",
+-        )
++        # fwupd does not allow a refresh if the new metadata has an older
++        # signature timestamp than the existing metadata, and it's best not to
++        # make any assumption about the relative signature timestamps of the
++        # custom and default metadata. (Apparently, in the past, the default
++        # metadata had a newer signature timestamp, but as of 2026-01-26, the
++        # custom metadata has a newer signature timestamp. The timestamp that
++        # appears to matter is the one inside the gpg signature, not the one in
++        # the jcat wrapper.) The only way we found to bypass the downgrade check
++        # was to delete the existing metadata. Do that once at the beginning so
++        # this test can work and again at the end so everything that uses the
++        # default metadata can work. If this test gets interrupted before the
++        # `finally` can run, then qubes-fwupdmgr will be broken on your system
++        # until you clear the metadata manually; sorry.
++        clear_lvfs_metadata()
++        try:
++            self.q.refresh_metadata(
++                remote_name="lvfs",
++                metadata_url=CUSTOM_METADATA
++            )
++            self.assertEqual(
++                self.captured_output.getvalue().strip(),
++                "Successfully refreshed metadata manually",
++                msg="Metadata refresh failed.",
++            )
++        finally:
++            clear_lvfs_metadata()
+ 
+     @unittest.skipUnless(check_whonix_updatevm(), "Requires sys-whonix")
+     def test_refresh_metadata_whonix(self):
+-        self.q.refresh_metadata(whonix=True, metadata_url=qfwupd.METADATA_URL)
++        self.q.refresh_metadata(whonix=True, remote_name="lvfs")
+         self.assertEqual(
+             self.captured_output.getvalue().strip(),
+             "Successfully refreshed metadata manually",
+-- 
+2.52.0
+

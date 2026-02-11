@@ -11,6 +11,11 @@ Patch2: 0002-qubes-make-fwupdmgr-get-updates-think-it-s-interacti.patch
 Patch3: 0003-qubes-Drop-custom-vendor-and-version-check.patch
 Patch4: 0004-qubes-do-not-use-deprecated-imp-module-in-tests.patch
 Patch5: 0005-qubes-fix-checking-for-whonix-in-tests.patch
+Patch6: 0006-Only-support-JCat-for-verification-of-metadata-and-f.patch
+Patch7: 0007-qubes-don-t-fail-on-duplicate-filenames-in-jcat-file.patch
+Patch8: 0008-qubes-treat-remote-Enabled-field-as-a-JSON-boolean.patch
+Patch9: 0009-qubes-use-Locations-0-field-of-update-instead-of-Uri.patch
+Patch10: 0010-qubes-tests-fix-metadata-signature-timestamp-skew.patch
 BuildArch: noarch
 
 BuildRequires: meson
