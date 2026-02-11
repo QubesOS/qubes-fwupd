@@ -1,3 +1,13 @@
+fwupd-qubes (2.0.16-2) unstable; urgency=medium
+
+  [ Matt McCutchen ]
+  * Fix several issues blocking basic usage or tests
+
+  [ Marek Marczykowski-Górecki ]
+  * Remove patch from PR#8 that is included in 2.0.16 already
+
+ -- Marek Marczykowski-Górecki <marmarek@invisiblethingslab.com>  Wed, 11 Feb 2026 21:38:59 +0100
+
 fwupd-qubes (2.0.16-1) --release; urgency=medium
 
   * version 2.0.16-1
