@@ -1,0 +1,36 @@
+From 04bd01e5a690b6879bc67375ab19f1d83e78113c Mon Sep 17 00:00:00 2001
+From: Matt McCutchen <matt@mattmccutchen.net>
+Date: Mon, 12 Jan 2026 11:25:56 -0500
+Subject: [PATCH 07/10] qubes: don't fail on duplicate filenames in jcat file
+
+---
+ contrib/qubes/src/vms/fwupd_download_updates.py | 9 +++++++++
+ 1 file changed, 9 insertions(+)
+
+diff --git a/contrib/qubes/src/vms/fwupd_download_updates.py b/contrib/qubes/src/vms/fwupd_download_updates.py
+index 48eedd65a..da6735175 100644
+--- a/contrib/qubes/src/vms/fwupd_download_updates.py
++++ b/contrib/qubes/src/vms/fwupd_download_updates.py
+@@ -85,10 +85,19 @@ class DownloadData(FwupdVmCommon):
+             raise Exception("fwupd-qubes: Extracting jcat file failed")
+         # rename extracted files to match jcat base name, instead of "ID"
+         # inside jcat
++        #
++        # As of 2025-10-11, the jcat file contains two p7b files of the same
++        # name, and `jcat-tool export` arbitrarily keeps one of them. dom0
++        # currently doesn't use these files, but we need to avoid crashing here
++        # by trying to rename the same file twice.
++        paths_already_done = set()
+         for line in stdout.decode("ascii").splitlines():
+             if not line.startswith("Wrote "):
+                 continue
+             path = line.split(" ", 1)[1]
++            if path in paths_already_done:
++                continue
++            paths_already_done.add(path)
+             base_path, ext = os.path.splitext(path)
+             if base_path == self.metadata_file:
+                 continue
+-- 
+2.52.0
+

@@ -11,6 +11,7 @@ Patch2: 0002-qubes-make-fwupdmgr-get-updates-think-it-s-interacti.patch
 Patch3: 0003-qubes-Drop-custom-vendor-and-version-check.patch
 Patch4: 0004-qubes-do-not-use-deprecated-imp-module-in-tests.patch
 Patch5: 0005-qubes-fix-checking-for-whonix-in-tests.patch
+Patch6: 0006-qubes-don-t-fail-on-duplicate-filenames-in-jcat-file.patch
 BuildArch: noarch
 
 BuildRequires: meson
