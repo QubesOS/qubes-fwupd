@@ -1,3 +1,10 @@
+fwupd-qubes (1.8.17-4) unstable; urgency=medium
+
+  [ Matt McCutchen ]
+  * Don't fail on duplicate filenames in jcat file
+
+ -- Marek Marczykowski-Górecki <marmarek@invisiblethingslab.com>  Fri, 27 Feb 2026 16:17:57 +0100
+
 fwupd-qubes (1.8.17-3) unstable; urgency=medium
 
   * Move qubes-fwupdmgr to /usr/bin
