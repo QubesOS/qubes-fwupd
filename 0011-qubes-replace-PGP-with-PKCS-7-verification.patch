@@ -1,0 +1,207 @@
+From 06947740e3d6c1f4717ee803e6f1e4392aeb1ec4 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Marek=20Marczykowski-G=C3=B3recki?=
+ <marmarek@invisiblethingslab.com>
+Date: Mon, 6 Jul 2026 01:51:28 +0200
+Subject: [PATCH] qubes: replace PGP with PKCS#7 verification
+
+The PGP signature is no longer included in the metadata jcat file.
+Switch to checking PKCS#7 using openssl command.
+See https://github.com/QubesOS/qubes-issues/issues/10869 for discussion.
+---
+ contrib/qubes/src/fwupd_receive_updates.py | 118 ++++++---------------
+ 1 file changed, 33 insertions(+), 85 deletions(-)
+
+diff --git a/contrib/qubes/src/fwupd_receive_updates.py b/contrib/qubes/src/fwupd_receive_updates.py
+index 2b1c4d8d2..38101364d 100644
+--- a/contrib/qubes/src/fwupd_receive_updates.py
++++ b/contrib/qubes/src/fwupd_receive_updates.py
+@@ -9,6 +9,7 @@
+ #
+ 
+ import base64
++import filecmp
+ import hashlib
+ import itertools
+ import os
+@@ -27,7 +28,7 @@ FWUPD_VM_DIR = "/home/user/.cache/fwupd"
+ FWUPD_VM_UPDATES_DIR = os.path.join(FWUPD_VM_DIR, "updates")
+ FWUPD_VM_METADATA_DIR = os.path.join(FWUPD_VM_DIR, "metadata")
+ FWUPD_PKI = "/etc/pki/fwupd"
+-FWUPD_PKI_PGP = "/etc/pki/fwupd/GPG-KEY-Linux-Vendor-Firmware-Service"
++FWUPD_PKI_P7B = "/etc/pki/fwupd-metadata/LVFS-CA.pem"
+ FWUPD_DOWNLOAD_PREFIX = "https://fwupd.org/downloads/"
+ HEADS_UPDATES_DIR = "/boot/updates"
+ 
+@@ -66,100 +67,48 @@ class FwupdReceiveUpdates:
+             self.clean_cache()
+             raise Exception("jcat-tool: Verification failed")
+ 
+-    def _crc24(self, data):
+-        """Calculate CRC-24
+-
+-        Checksum calculation for PGP armored signature. This algorithm isn't
+-        available in Python standard library, but it's simple enough to
+-        implement here. It doesn't need to be fast, nor side-channel resistant.
+-        """
+-        crc = 0xB704CE  # crc24_init
+-        for b in data:
+-            crc ^= b << 16
+-            for i in range(8):
+-                crc <<= 1
+-                if crc & 0x1000000:
+-                    crc ^= 0x1864CFB  # crc24_poly
+-        return crc
+-
+-    def _pgp_parse(self, signature_path):
+-        """Verifies if GPG signature is correctly formatted
+-
+-        Verify if signature is well formed - sqv will verify if the signature
+-        itself correct, but may accept extra data in the signature packets
+-        that could later confuse GnuPG used by fwupd.
+-        Verify also armor checksum, as sqv doesn't do that.
+-        """
+-
+-        # sigparse expects binary format, so decode base64 first
+-        with open(signature_path, "rb") as sig:
+-            data = sig.read(4096)  # arbitrary size limit
+-            if sig.read(1) != b"":
+-                raise Exception("pgp: signature too big")
+-            lines = data.splitlines()
+-            # format described in RFC-4880 ch 6
+-            if lines[0:2] != [b"-----BEGIN PGP SIGNATURE-----", b""]:
+-                raise Exception("pgp: invalid header")
+-            if lines[-1] != b"-----END PGP SIGNATURE-----":
+-                raise Exception("pgp: invalid footer")
+-            checksum = lines[-2]
+-            if checksum[0] != ord("=") or len(checksum) != 5:
+-                raise Exception("pgp: invalid checksum format")
+-            base64_data = b"".join(lines[2:-2])
+-            data = base64.b64decode(base64_data, validate=True)
+-            crc = base64.b64decode(checksum[1:], validate=True)
+-            crc = struct.unpack(">I", b"\0" + crc)[0]
+-            if crc != self._crc24(data):
+-                raise Exception("pgp: invalid checksum")
+-            with tempfile.NamedTemporaryFile() as tmp:
+-                tmp.write(data)
+-                tmp.flush()
+-                p = subprocess.Popen(["sigparse", tmp.name], stderr=subprocess.PIPE)
+-                _, stderr = p.communicate()
+-                if p.returncode != 0:
+-                    raise Exception("pgp: invalid signature format: " + stderr.decode())
+-        # reconstruct armored data to ensure its canonical form
+-        with open(signature_path, "wb") as sig:
+-            sig.write(b"-----BEGIN PGP SIGNATURE-----\n")
+-            sig.write(b"\n")
+-            encoded = iter(base64.b64encode(data))
+-            while line := bytes(itertools.islice(encoded, 76)):
+-                sig.write(line + b"\n")
+-            sig.write(checksum + b"\n")
+-            sig.write(b"-----END PGP SIGNATURE-----\n")
+-
+-    def _pgp_verification(self, signature_path, file_path):
+-        """Verifies GPG signature.
++    def _p7b_verification(self, signature_path, file_path):
++        """Verifies PKCS#7 signature.
+ 
+         Keyword argument:
+         signature_path -- absolute path to signature file
+         file_path -- absolute path to the signed file location
+         """
+         assert file_path.startswith("/"), f"bad file path {file_path!r}"
+-        try:
+-            self._pgp_parse(signature_path)
+-        except Exception:
+-            self.clean_cache()
+-            raise
++        verify_output = file_path + ".verified"
+         cmd_verify = [
+-            "sqv",
+-            "--keyring",
+-            FWUPD_PKI_PGP,
+-            "--",
++            "openssl",
++            "cms",
++            "-verify",
++            "-inform",
++            "PEM",
++            "-in",
+             signature_path,
++            "-content",
+             file_path,
++            "-out",
++            verify_output,
++            "-binary",
++            "-CAfile",
++            FWUPD_PKI_P7B,
++            "-no-CApath",
++            "-no-CAstore",
++            "-purpose",
++            "codesign",
+         ]
+         p = subprocess.Popen(cmd_verify, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+-        stdout, __ = p.communicate()
+-        signature_key = stdout.decode("utf-8")
+-        if p.returncode != 0 or not signature_key:
++        stdout, stderr = p.communicate()
++        if p.returncode != 0 or stderr != b"CMS Verification successful\n":
++            self.clean_cache()
++            raise Exception(f"PKCS#7: Verification failed: {stderr}")
++        if not filecmp.cmp(file_path, verify_output):
+             self.clean_cache()
+-            raise Exception("pgp: Verification failed")
++            raise Exception("PKCS#7: verification output does not match original file")
+ 
+     def _reconstruct_jcat(self, jcat_path, file_path):
+         """Reconstruct jcat file from verified parts
+ 
+-        Currently included parts: .asc, .sha256
++        Currently included parts: .p7b, .sha256
+         Hashes are generated locally if missing
+ 
+         Arguments:
+@@ -177,7 +126,7 @@ class FwupdReceiveUpdates:
+                 with open(hash_fname, "w") as f_hash:
+                     f_hash.write(hash_val)
+ 
+-        signatures = ("asc",)
++        signatures = ("p7b",)
+ 
+         file_id = os.path.basename(file_path)
+         for sign_type in signatures + hashes:
+@@ -249,7 +198,6 @@ class FwupdReceiveUpdates:
+                 "--",
+                 self.metadata_file_updatevm,
+             ]
+-            # TODO: switch to ed25519 once firmware.xml.gz.jcat will have it
+             cmd_copy_metadata_file_signature = [
+                 "qvm-run",
+                 "--pass-io",
+@@ -259,12 +207,12 @@ class FwupdReceiveUpdates:
+                 updatevm,
+                 "cat",
+                 "--",
+-                self.metadata_file_updatevm + ".asc",
++                self.metadata_file_updatevm + ".p7b",
+             ]
+             untrusted_metadata_file = os.path.join(tmpdir, metadata_name)
+ 
+             with open(untrusted_metadata_file, "bx") as untrusted_file_1, open(
+-                untrusted_metadata_file + ".asc", "bx"
++                untrusted_metadata_file + ".p7b", "bx"
+             ) as untrusted_file_2, subprocess.Popen(
+                 cmd_copy_metadata_file, stdout=untrusted_file_1
+             ) as p, subprocess.Popen(
+@@ -277,8 +225,8 @@ class FwupdReceiveUpdates:
+             if q.returncode != 0:
+                 raise Exception("qvm-run: Copying metadata signature failed!!")
+ 
+-            self._pgp_verification(
+-                untrusted_metadata_file + ".asc", untrusted_metadata_file
++            self._p7b_verification(
++                untrusted_metadata_file + ".p7b", untrusted_metadata_file
+             )
+             self._reconstruct_jcat(
+                 untrusted_metadata_file + ".jcat", untrusted_metadata_file
+-- 
+2.54.0
+

@@ -15,6 +15,7 @@ Patch7: 0007-qubes-don-t-fail-on-duplicate-filenames-in-jcat-file.patch
 Patch8: 0008-qubes-treat-remote-Enabled-field-as-a-JSON-boolean.patch
 Patch9: 0009-qubes-use-Locations-0-field-of-update-instead-of-Uri.patch
 Patch10: 0010-qubes-tests-fix-metadata-signature-timestamp-skew.patch
+Patch11: 0011-qubes-replace-PGP-with-PKCS-7-verification.patch
 BuildArch: noarch
 
 BuildRequires: meson
@@ -29,7 +30,7 @@ Requires:   gcab
 Requires:   fwupd >= 1.5.7
 Requires:   libjcat >= 0.1.6
 Requires:   python3-packaging
-Requires:   sequoia-sqv
+Requires:   openssl
 
 %description dom0
 fwupd wrapper for Qubes OS
