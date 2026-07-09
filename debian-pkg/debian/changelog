@@ -1,3 +1,9 @@
+fwupd-qubes (2.0.16-3) unstable; urgency=medium
+
+  * Replace PGP with PKCS#7 verification
+
+ -- Marek Marczykowski-Górecki <marmarek@invisiblethingslab.com>  Thu, 09 Jul 2026 04:34:18 +0200
+
 fwupd-qubes (2.0.16-2) unstable; urgency=medium
 
   [ Matt McCutchen ]
